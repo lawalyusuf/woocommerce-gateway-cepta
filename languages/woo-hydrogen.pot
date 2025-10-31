@@ -1,0 +1,219 @@
+# Copyright (C) 2025 Cepta Developers
+# This file is distributed under the MIT License.
+msgid ""
+msgstr ""
+"Project-Id-Version: Cepta Payment Gateway for WooCommerce\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/cepta-payment-gateway-for-woocommerce\n"
+"POT-Creation-Date: 2025-10-20 12:38+0100\n"
+"PO-Revision-Date: 2025-10-20 12:38+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.12\n"
+"X-Domain: cepta-payment-gateway-for-woocommerce\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-WPHeader: woo-cepta.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: includes/class-wc-gateway-custom-cepta.php:17
+#: includes/class-wc-gateway-cepta.php:406
+msgid "Enable/Disable"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:19
+#, php-format
+msgid "Enable Cepta - %s"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:21
+msgid "Enable this gateway as a payment option on the checkout page."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:26
+#: includes/class-wc-gateway-cepta.php:370
+msgid "Title"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:28
+#: includes/class-wc-gateway-cepta.php:371
+msgid "This controls the payment method title which the user sees during checkout."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:31
+#: includes/class-wc-gateway-custom-cepta.php:350
+#: includes/class-wc-gateway-cepta.php:165
+#: includes/class-wc-gateway-cepta.php:325
+msgid "Cepta"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:34
+#: includes/class-wc-gateway-cepta.php:377
+msgid "Description"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:33
+#: includes/class-wc-gateway-cepta.php:376
+msgid "This controls the payment method description which the user sees during checkout."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:40
+#: includes/class-wc-gateway-cepta.php:391
+msgid "Payment Option"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:42
+#: includes/class-wc-gateway-cepta.php:401
+msgid "Inline Checkout lets customers pay directly on your site, while Redirect takes them to Cepta to complete payment."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:47
+#: includes/class-wc-gateway-custom-cepta.php:89
+#: includes/class-wc-gateway-cepta.php:398
+#: includes/class-wc-gateway-cepta.php:462
+#: includes/class-wc-gateway-cepta.php:475
+msgid "Select One"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:46
+#: includes/class-wc-gateway-cepta.php:443
+msgid "Inline"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:48
+#: includes/class-wc-gateway-cepta.php:400
+msgid "Redirect"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:127
+#: includes/class-wc-gateway-cepta.php:489
+msgid "Custom Metadata"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:144
+#: includes/class-wc-gateway-cepta.php:484
+msgid "Enable Custom Metadata"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:131
+#: includes/class-wc-gateway-cepta.php:489
+msgid "If enabled, you will be able to send more information about the order to Cepta."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:152
+#: includes/class-wc-gateway-cepta.php:498
+msgid "Order ID"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:136
+#: includes/class-wc-gateway-cepta.php:494
+msgid "Send Order ID"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:140
+#: includes/class-wc-gateway-cepta.php:498
+msgid "If checked, the Order ID will be sent to Cepta."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:161
+#: includes/class-wc-gateway-cepta.php:507
+msgid "Customer Name"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:158
+#: includes/class-wc-gateway-cepta.php:516
+msgid "If checked, the customer email address will be sent to Cepta."
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:163
+#: includes/class-wc-gateway-cepta.php:521
+msgid "Customer Phone"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:188
+#: includes/class-wc-gateway-cepta.php:534
+msgid "Order Billing Address"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:172
+#: includes/class-wc-gateway-cepta.php:530
+msgid "Send Order Billing Address"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:182
+#: includes/class-wc-gateway-cepta.php:540
+msgid "Send Order Shipping Address"
+msgstr ""
+
+#: includes/class-wc-gateway-custom-cepta.php:185
+#: includes/class-wc-gateway-cepta.php:543
+msgid "If checked, the order shipping address will be sent to Cepta."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta-subscriptions.php:44
+msgid "This subscription has a free trial."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta-subscriptions.php:142
+#: includes/class-wc-gateway-cepta.php:1129
+#, php-format
+msgid "Payment via CEPTA GATEWAY Successful (Transaction Reference: %s)"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta-subscriptions.php:69
+msgid "Cepta Transaction Failed"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:332
+#, php-format
+msgid "Please enter your Cepta merchant details <a href=\"%s\">here</a> to use the Cepta WooCommerce plugin."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:378
+#, php-format
+msgid "Optional: To avoid failed verifications due to poor network, set your webhook URL <a href=\"%1$s\" target=\"_blank\" rel=\"noopener noreferrer\">here</a> to the URL below:<span style=\"color: red\"><pre><code>%2$s</code></pre></span>"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:391
+msgid "Cepta Payment Gateway Disabled"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:407
+msgid "Enable Cepta"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:409
+msgid "Enable Cepta as a payment option on the checkout page."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:424
+msgid "Powered by Cepta. Accepts Mastercard, Visa, Verve."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:428
+msgid "Test Mode"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:431
+msgid "Test mode enables you to test payments before going live."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:450
+msgid "Enter your Sandbox key here. Once live, enter your Live key."
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:469
+msgid "Remove Cancel Order & Restore Cart Button"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:477
+msgid "Saved Cards"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:478
+msgid "Enable Payment via Saved Cards"
+msgstr ""
+
+#: includes/class-wc-gateway-cepta.php:480
+msgid "If enabled, users can pay with a saved card during checkout. Card details are stored securely on Cepta servers, not your store. Note: SSL certificate is
