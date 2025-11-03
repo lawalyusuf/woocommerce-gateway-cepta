@@ -1,5 +1,5 @@
 /**
- * WooCommerce CeptaPay Payment Gateway Client Script
+ * WooCommerce Cepta Payment Gateway Client Script
  */
 
 jQuery(function ($) {
@@ -310,9 +310,7 @@ jQuery(function ($) {
       verifyTransaction(ref);
     }
 
-    let urlRef = new URLSearchParams(window.location.search).get(
-      "TransactionRef"
-    );
+    let urlRef = new URLSearchParams(window.location.search).get("ref");
 
     if (!urlRef) {
       const queryIndex = currentUrl.lastIndexOf("?");
@@ -320,7 +318,7 @@ jQuery(function ($) {
         const params = currentUrl.substring(queryIndex + 1).split("&");
         for (let i = 0; i < params.length; i++) {
           const parts = params[i].split("=");
-          if ("TransactionRef" === parts[0]) {
+          if ("ref" === parts[0]) {
             urlRef = parts[1];
             break;
           }

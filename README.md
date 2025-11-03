@@ -127,20 +127,20 @@ Your contributions help us make the PG plugin even better for the community. Tha
 
 ###
 
-![Screenshot 1](https://github.com/CeptaAfrica/woocommerce-Cepta-payment-gateway-plugin/blob/staging/assets/images/screenshot-img1.png)
+![Screenshot 1]
 
 ### 2. Cepta WooCommerce Checkout page
 
 ###
 
-![Screenshot 2](https://github.com/CeptaAfrica/woocommerce-cepta-payment-gateway-plugin/blob/staging/assets/images/screenshot-img2.png)
+![Screenshot 2]
 
 ### 3. Cepta Inline Checkout
 
 ###
 
-![Screenshot 3](https://github.com/CeptaAfrica/cepta-payment-gateway-for-woocommerce/blob/staging/assets/images/screenshot-img3.png)
+![Screenshot 3]
 
 ###
 
-![Screenshot 4](https://github.com/CeptaAfrica/cepta-payment-gateway-for-woocommerce/blob/staging/assets/images/screenshot-img4.png)
+![Screenshot 4]

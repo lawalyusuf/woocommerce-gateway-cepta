@@ -260,7 +260,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		add_action('woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
 
 		// Webhook listener/API hook.
-		add_action('woocommerce_api_tbz_wc_cepta_webhook', array($this, 'process_webhooks'));
+		add_action('woocommerce_api_cep_wc_cepta_webhook', array($this, 'process_webhooks'));
 
 		add_action('woocommerce_api_cepta_wc_payment', array($this, 'cepta_wc_payment_popup_action'));
 
@@ -426,7 +426,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				'title'       => __('Title', 'cepta-woocommerce-payment'),
 				'type'        => 'text',
 				'description' => __('This controls the payment method title which the user sees during checkout.', 'cepta-woocommerce-payment'),
-				'default'     => __('CeptaPay Payment Gateway', 'cepta-woocommerce-payment'),
+				'default'     => __('Cepta Payment Gateway', 'cepta-woocommerce-payment'),
 				'desc_tip'    => true,
 			),
 			'description'                      => array(
@@ -457,9 +457,9 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				),
 			),
 			'test_secret_key'                  => array(
-				'title'       => __('Sandbox API Key', 'woo-cepta'),
+				'title'       => __('Sandbox/Test Secret Key', 'woo-cepta'),
 				'type'        => 'password',
-				'description' => __('Enter your Sandbox API Key here', 'woo-cepta'),
+				'description' => __('Enter your Sandbox/Test Secret Key here', 'woo-cepta'),
 				'default'     => '',
 			),
 			'test_public_key'                  => array(
@@ -936,13 +936,8 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 
 		$order = wc_get_order($order_id);
 
-		// FIX 1: RESTORE CORRECT AMOUNT CONVERSION.
-		// Amount MUST be multiplied by 100 to represent the smallest currency unit (e.g., Kobo/Cents).
 		$amount_raw = floatval($order->get_total());
-		// Correct calculation: e.g., 50.12 * 100 = 5012
-		$amount = intval(round($amount_raw)); // Use round() for safety before intval
-
-		// NEW VALIDATION: Check for minimum required amount (50 Naira = 5000 Kobo/Cents)
+		$amount = intval(round($amount_raw));
 
 		$min_amount = 50;
 		if ($amount < $min_amount) {
@@ -1128,6 +1123,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 	 *
 	 * @return void Sends a JSON response and exits.
 	 */
+
 	function verify_cepta_wc_transaction_popup()
 	{
 		// Exit immediately if security checks fail
@@ -1139,7 +1135,6 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 			return;
 		}
 
-		// Ensure required transaction data is present
 		if (!isset($_POST['transactionRef']) || !isset($_POST['ceptaOderId'])) {
 			wp_send_json(array('result' => 'error', 'message' => 'TransactionRef or OrderId not found in POST data.'));
 			return;
@@ -1148,12 +1143,23 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$ceptaTransactionRef = sanitize_text_field(wp_unslash($_POST['transactionRef']));
 		$ceptaOrderId        = sanitize_text_field(wp_unslash($_POST['ceptaOderId']));
 		$order_id               = (int) $ceptaOrderId;
-		$ocepta              = wc_get_order($order_id);
+		$order                  = wc_get_order($order_id);
 
-		$is_test_mode = $this->testmode ?? true; // Default to true if not defined
+		// Ensure the order object was successfully retrieved
+		if (! $order) {
+			// Send a specific error message if the order doesn't exist
+			wp_send_json(array('statusRes' => false, 'status' => 'error', 'message' => 'Order not found for verification.'));
+			return;
+		}
+
+		$is_test_mode = $this->testmode ?? true;
 		$public_key   = $is_test_mode ? $this->test_public_key : $this->live_public_key;
 		$secret_key   = $is_test_mode ? $this->test_secret_key : $this->live_secret_key;
+		// $base_url     = $is_test_mode ?
+		// 	'https://dev-adapter.cepta.co' : (defined('CEPTA_LIVE_KEY') ? 'CEPTA_LIVE_KEY' : 'https://dev-adapter.cepta.co'); 
 		$base_url     = 'https://dev-adapter.cepta.co';
+		// Get the site URL for the request header
+		$site_url     = get_site_url();
 		$ts           = time();
 		$method       = 'GET';
 		$path         = '/api/v1/pay/confirm-status';
@@ -1168,6 +1174,9 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 			'X-Access-Ts'        => $ts,
 			'X-Access-Signature' => $signature,
 			'Cache-Control'      => 'no-cache',
+			// Add Referer/Origin headers to identify the source to the API
+			'Referer'            => $site_url,
+			'Origin'             => $site_url,
 		);
 
 		$args = array(
@@ -1179,6 +1188,8 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$response = wp_remote_get($full_url, $args);
 
 		if (is_wp_error($response)) {
+			// Update order status on WP API failure
+			$order->update_status('failed', sprintf(__('Payment verification failed due to network error: %s', 'woo-cepta'), $response->get_error_message()));
 			wp_send_json(array('result' => 'error', 'message' => $response->get_error_message()));
 			return;
 		}
@@ -1188,14 +1199,16 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$response_data = json_decode($response_body);
 		$error_message = '';
 
-		// --- TEMP DEBUG LOGGING (Check PHP Error Log) ---
+		// --- TEMP DEBUG LOGGING  ---
 		// error_log('Cepta API Raw Response: ' . $response_body);
 		// error_log('Cepta API Decoded Data: ' . print_r($response_data, true));
 
+		// Check if the API call was successful (200) AND contains the expected data status
 		if (200 === $response_code && isset($response_data->data->status)) {
 
-			$cepta_api_status = $response_data->data->status;
+			$cepta_api_status      = $response_data->data->status;
 			$cepta_transaction_ref = $ceptaTransactionRef;
+
 			if ('Successful' === $cepta_api_status) {
 
 				// Prevent processing an already completed order
@@ -1208,12 +1221,15 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				$order_total      = $order->get_total();
 				$order_currency   = $order->get_currency();
 				$currency_symbol  = get_woocommerce_currency_symbol($order_currency);
-				$amount_paid      = floatval($response_data->data->amount);
-				$payment_currency = strtoupper($response_data->data->currency ?? $order_currency); // Use null coalescing for safety
+
+				// Check for required data from API response before using it
+				$amount_paid = isset($response_data->data->amount) ? floatval($response_data->data->amount) : 0;
+				$payment_currency = isset($response_data->data->currency) ? strtoupper($response_data->data->currency) : $order_currency;
+
 				$gateway_symbol   = get_woocommerce_currency_symbol($payment_currency);
 				$notice           = '';
 
-				//  Amount Check
+				// Amount Check
 				if ($amount_paid < $order_total) {
 					$order->update_status('on-hold', __('Amount paid is less than the total order amount.', 'woo-cepta'));
 					$order->add_order_note(sprintf(__('Amount Paid was %1$s (%2$s) while total order amount is %3$s (%4$s)', 'woo-cepta'), $gateway_symbol, $amount_paid, $currency_symbol, $order_total));
@@ -1236,7 +1252,6 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 					$notice = __('Thank you for shopping with us. Your payment transaction was successful.', 'woo-cepta');
 				}
 
-				// Final success actions
 				$order->update_meta_data('_transaction_id', $cepta_transaction_ref);
 				$order->save();
 				$this->save_card_details($response_data, $order->get_user_id(), $order_id);
@@ -1251,21 +1266,17 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 					'redirect'  => $this->get_return_url($order)
 				));
 			} elseif ('Failed' === $cepta_api_status) {
-				// Transaction failed
 				$error_message = $response_data->message ?? 'Payment declined by gateway.';
 				$order->update_status("failed", sprintf(__('Payment was declined by CeptaPay. Details: %s', 'woo-cepta'), $error_message));
 				wp_send_json(array('statusRes' => false, 'status' => 'error', 'message' => 'Payment failed or declined.'));
 			} else {
-				// Pending/Unknown status
 				$order->add_order_note(sprintf(__('Payment status is currently: %s', 'woo-cepta'), $cepta_api_status));
 				wp_send_json(array('statusRes' => false, 'status' => 'pending', 'message' => 'Payment status is still pending: ' . $cepta_api_status));
 			}
 		} else {
-			// Handle API server error, non-200 code, or unexpected response structure
 			$error_message = $response_data->message ?? 'API verification failed.';
 			$order->update_status("failed", sprintf(__('Transaction verification failed. API Code %d. Error: %s', 'woo-cepta'), $response_code, $error_message));
 
-			// Respond with failure and include debug info
 			wp_send_json(array(
 				'statusRes' => false,
 				'status' => 'error',
@@ -1273,9 +1284,8 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				'debug_raw_response' => $response_body
 			));
 		}
-
-		exit;
 	}
+
 	/**
 	 * Save Customer Card Details.
 	 *
@@ -1560,7 +1570,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$ts           = time();
 		// $method       = 'GET';
 		// $path         = '/api/v1/pay/confirm-status';
-		// $full_url     = $base_url . $path . '?TransactionRef=' . urlencode($hydrogenTransactionRef);
+		// $full_url     = $base_url . $path . '?TransactionRef=' . urlencode($ceptaTransactionRef);
 
 		// $payload_string = $ts . $method . $path; // GET request body is empty
 		// $signature      = hash_hmac('sha256', $payload_string, $secret_key);
