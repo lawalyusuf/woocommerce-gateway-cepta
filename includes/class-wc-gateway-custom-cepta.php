@@ -1,7 +1,16 @@
 <?php
 
 /**
- * Class _WC_Cepta_Custom_Gateway.
+ * CeptaPay – Custom Gateway (admin UI + checkout params)
+ * - Settings, icons, param building, split filters, metadata, and checkout localization.
+ */
+
+defined('ABSPATH') || exit;
+
+/**
+ * Class WC_Gateway_Custom_Cepta
+ *
+ * Extends subscriptions
  */
 class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 {
@@ -11,9 +20,8 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 	 */
 	public function init_form_fields()
 	{
-
 		$this->form_fields = array(
-			'enabled'                          => array(
+			'enabled' => array(
 				'title'       => __('Enable/Disable', 'woo-cepta'),
 				/* translators: payment method title */
 				'label'       => sprintf(__('Enable cepta - %s', 'woo-cepta'), $this->title),
@@ -22,21 +30,21 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'title'                            => array(
+			'title' => array(
 				'title'       => __('Title', 'woo-cepta'),
 				'type'        => 'text',
 				'description' => __('This controls the payment method title which the user sees during checkout.', 'cepta-wc'),
 				'desc_tip'    => true,
 				'default'     => __('cepta', 'cepta-wc'),
 			),
-			'description'                      => array(
+			'description' => array(
 				'title'       => __('Description', 'woo-cepta'),
 				'type'        => 'textarea',
 				'description' => __('This controls the payment method description which the user sees during checkout.', 'woo-cepta'),
 				'desc_tip'    => true,
 				'default'     => '',
 			),
-			'payment_page'                     => array(
+			'payment_page' => array(
 				'title'       => __('Payment Option', 'woo-cepta'),
 				'type'        => 'select',
 				'description' => __('Popup shows the payment popup on the page while Redirect will redirect the customer to Cepta to make payment.', 'cepta-wc'),
@@ -48,7 +56,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 					'redirect' => __('Redirect', 'woo-cepta'),
 				),
 			),
-			'autocomplete_order'               => array(
+			'autocomplete_order' => array(
 				'title'       => __('Autocomplete Order After Payment', 'woo-cepta'),
 				'label'       => __('Autocomplete Order', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -57,26 +65,25 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'remove_cancel_order_button'       => array(
+			'remove_cancel_order_button' => array(
 				'title'       => __('Remove Cancel Order & Restore Cart Button', 'woo-cepta'),
 				'label'       => __('Remove the cancel order & restore cart button on the pay for order page', 'woo-cepta'),
 				'type'        => 'checkbox',
-				'description' => '',
 				'default'     => 'no',
 			),
-			'subaccount_code'                  => array(
+			'subaccount_code' => array(
 				'title'       => __('Subaccount Code', 'woo-cepta'),
 				'type'        => 'text',
 				'description' => __('Enter the subaccount code here.', 'woo-cepta'),
-				'class'       => __('woocommerce_cepta_subaccount_code', 'woo-cepta'),
+				'class'       => 'woocommerce_cepta_subaccount_code',
 				'default'     => '',
 			),
-			'payment_channels'                 => array(
+			'payment_channels' => array(
 				'title'             => __('Payment Channels', 'woo-cepta'),
 				'type'              => 'multiselect',
 				'class'             => 'wc-enhanced-select wc-cepta-payment-channels',
 				'description'       => __('The payment channels enabled for this gateway', 'woo-cepta'),
-				'default'           => '',
+				'default'           => array(),
 				'desc_tip'          => true,
 				'select_buttons'    => true,
 				'options'           => $this->channels(),
@@ -84,12 +91,12 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 					'data-placeholder' => __('Select payment channels', 'woo-cepta'),
 				),
 			),
-			'cards_allowed'                    => array(
+			'cards_allowed' => array(
 				'title'             => __('Allowed Card Brands', 'woo-cepta'),
 				'type'              => 'multiselect',
 				'class'             => 'wc-enhanced-select wc-cepta-cards-allowed',
 				'description'       => __('The card brands allowed for this gateway. This filter only works with the card payment channel.', 'woo-cepta'),
-				'default'           => '',
+				'default'           => array(),
 				'desc_tip'          => true,
 				'select_buttons'    => true,
 				'options'           => $this->card_types(),
@@ -97,12 +104,12 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 					'data-placeholder' => __('Select card brands', 'woo-cepta'),
 				),
 			),
-			'banks_allowed'                    => array(
+			'banks_allowed' => array(
 				'title'             => __('Allowed Banks Card', 'woo-cepta'),
 				'type'              => 'multiselect',
 				'class'             => 'wc-enhanced-select wc-cepta-banks-allowed',
 				'description'       => __('The banks whose card should be allowed for this gateway. This filter only works with the card payment channel.', 'woo-cepta'),
-				'default'           => '',
+				'default'           => array(),
 				'desc_tip'          => true,
 				'select_buttons'    => true,
 				'options'           => $this->banks(),
@@ -110,12 +117,12 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 					'data-placeholder' => __('Select banks', 'woo-cepta'),
 				),
 			),
-			'payment_icons'                    => array(
+			'payment_icons' => array(
 				'title'             => __('Payment Icons', 'woo-cepta'),
 				'type'              => 'multiselect',
 				'class'             => 'wc-enhanced-select wc-cepta-payment-icons',
 				'description'       => __('The payment icons to be displayed on the checkout page.', 'woo-cepta'),
-				'default'           => '',
+				'default'           => array(),
 				'desc_tip'          => true,
 				'select_buttons'    => true,
 				'options'           => $this->payment_icons(),
@@ -123,7 +130,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 					'data-placeholder' => __('Select payment icons', 'woo-cepta'),
 				),
 			),
-			'custom_metadata'                  => array(
+			'custom_metadata' => array(
 				'title'       => __('Custom Metadata', 'woo-cepta'),
 				'label'       => __('Enable Custom Metadata', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -132,7 +139,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_order_id'                    => array(
+			'meta_order_id' => array(
 				'title'       => __('Order ID', 'woo-cepta'),
 				'label'       => __('Send Order ID', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -141,7 +148,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_name'                        => array(
+			'meta_name' => array(
 				'title'       => __('Customer Name', 'woo-cepta'),
 				'label'       => __('Send Customer Name', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -150,7 +157,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_email'                       => array(
+			'meta_email' => array(
 				'title'       => __('Customer Email', 'woo-cepta'),
 				'label'       => __('Send Customer Email', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -159,7 +166,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_phone'                       => array(
+			'meta_phone' => array(
 				'title'       => __('Customer Phone', 'woo-cepta'),
 				'label'       => __('Send Customer Phone', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -168,7 +175,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_billing_address'             => array(
+			'meta_billing_address' => array(
 				'title'       => __('Order Billing Address', 'woo-cepta'),
 				'label'       => __('Send Order Billing Address', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -177,7 +184,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_shipping_address'            => array(
+			'meta_shipping_address' => array(
 				'title'       => __('Order Shipping Address', 'woo-cepta'),
 				'label'       => __('Send Order Shipping Address', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -186,7 +193,7 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 				'default'     => 'no',
 				'desc_tip'    => true,
 			),
-			'meta_products'                    => array(
+			'meta_products' => array(
 				'title'       => __('Product(s) Purchased', 'woo-cepta'),
 				'label'       => __('Send Product(s) Purchased', 'woo-cepta'),
 				'type'        => 'checkbox',
@@ -203,71 +210,62 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 	 */
 	public function admin_options()
 	{
-
-		$cepta_settings_url = admin_url('admin.php?page=wc-settings&tab=checkout&section=cepta');
+		$cepta_settings_url   = admin_url('admin.php?page=wc-settings&tab=checkout&section=cepta');
 		$checkout_settings_url = admin_url('admin.php?page=wc-settings&tab=checkout');
 ?>
-
 		<h2>
-
 			<?php
 			printf(
-				// Translators: %s payment method title 
+				/* translators: %s payment method title */
 				wp_kses_post(__('Cepta - %s', 'woo-cepta')),
 				esc_html($this->title)
 			);
 			?>
-
-			<?php
-			if (function_exists('wc_back_link')) {
-				wc_back_link(__('Return to payments', 'woo-cepta'), $checkout_settings_url);
-			}
-			?>
+			<?php if (function_exists('wc_back_link')) : ?>
+				<?php wc_back_link(__('Return to payments', 'woo-cepta'), $checkout_settings_url); ?>
+			<?php endif; ?>
 		</h2>
 
 		<h4>
-
 			<?php
 			printf(
-				// Translators: %s is the link to set the webhook URL
+				/* translators: %s is the link to set the webhook URL */
 				wp_kses_post(__('Important: To avoid situations where bad network makes it impossible to verify transactions, set your webhook URL <a href="%s" target="_blank" rel="noopener noreferrer">here</a> to the URL below', 'cepta-woocommerce')),
 				esc_url('#')
 			);
 			?>
 		</h4>
 
-		<p style="color: red">
+		<p style="color:red">
 			<code><?php echo esc_url(WC()->api_request_url('cepta-wc_webhook')); ?></code>
 		</p>
 
 		<p>
-
 			<?php
 			printf(
-				// Translators: %s is the link to the Cepta settings page for configuring the authentication token and test mode
-				esc_html__('To configure your Cepta Authentication Token and enable/disable test mode, do that <a href="%s">here</a>', 'cepta-woocommerce'),
+				/* translators: %s is the link to the Cepta settings page */
+				wp_kses_post(__('To configure your Cepta Authentication Token and enable/disable test mode, do that <a href="%s">here</a>', 'cepta-woocommerce')),
 				esc_url($cepta_settings_url)
 			);
 			?>
-
 		</p>
-<?php
 
+<?php
 		if ($this->is_valid_for_use()) {
 			echo '<table class="form-table">';
 			$this->generate_settings_html();
 			echo '</table>';
 		} else {
-
-			echo '<div class="inline error"><p><strong>' . wp_kses(
-				sprintf( // Translators: %s is the error message related to the Cepta Payment Gateway being disabled
-					__('Cepta Payment Gateway Disabled: %s', 'cepta-woocommerce'),
-					esc_attr($this->msg)
-				),
-				[
-					'strong' => [], // Allow <strong> tags
-				]
-			) . '</strong></p></div>';
+			echo '<div class="inline error"><p><strong>' .
+				wp_kses(
+					sprintf(
+						/* translators: %s is an error message */
+						__('Cepta Payment Gateway Disabled: %s', 'cepta-woocommerce'),
+						esc_html($this->msg)
+					),
+					array('strong' => array())
+				) .
+				'</strong></p></div>';
 		}
 	}
 
@@ -276,7 +274,6 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 	 */
 	public function channels()
 	{
-
 		return array(
 			'card'          => __('Cards', 'woo-cepta'),
 			'bank'          => __('Pay with Bank', 'woo-cepta'),
@@ -291,7 +288,6 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 	 */
 	public function card_types()
 	{
-
 		return array(
 			'visa'       => __('Visa', 'woo-cepta'),
 			'verve'      => __('Verve', 'woo-cepta'),
@@ -304,7 +300,6 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 	 */
 	public function banks()
 	{
-
 		return array(
 			'044'  => __('Access Bank', 'woo-cepta'),
 			'035A' => __('ALAT by WEMA', 'woo-cepta'),
@@ -342,84 +337,82 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 	 */
 	public function payment_icons()
 	{
-
 		return array(
-			'verve'         => __('Verve', 'woo-cepta'),
-			'visa'          => __('Visa', 'woo-cepta'),
-			'mastercard'    => __('Mastercard', 'woo-cepta'),
+			'verve'      => __('Verve', 'woo-cepta'),
+			'visa'       => __('Visa', 'woo-cepta'),
+			'mastercard' => __('Mastercard', 'woo-cepta'),
 			'ceptawhite' => __('Secured by Cepta White', 'woo-cepta'),
 			'ceptablue'  => __('Secured by Cepta Blue', 'woo-cepta'),
 			'cepta-wc'   => __('Cepta Nigeria', 'woo-cepta'),
 			'cepta-gh'   => __('Cepta Ghana', 'woo-cepta'),
-			'access'        => __('Access Bank', 'woo-cepta'),
-			'alat'          => __('ALAT by WEMA', 'woo-cepta'),
-			'aso'           => __('ASO Savings and Loans', 'woo-cepta'),
-			'citibank'      => __('Citibank Nigeria', 'woo-cepta'),
-			'diamond'       => __('Access Bank (Diamond)', 'woo-cepta'),
-			'ecobank'       => __('Ecobank Nigeria', 'woo-cepta'),
-			'ekondo'        => __('Ekondo Microfinance Bank', 'woo-cepta'),
-			'enterprise'    => __('Enterprise Bank', 'woo-cepta'),
-			'fidelity'      => __('Fidelity Bank', 'woo-cepta'),
-			'firstbank'     => __('First Bank of Nigeria', 'woo-cepta'),
-			'fcmb'          => __('First City Monument Bank', 'woo-cepta'),
-			'gtbank'        => __('Guaranty Trust Bank', 'woo-cepta'),
-			'heritage'      => __('Heritage Bank', 'woo-cepta'),
-			'jaiz'          => __('Jaiz Bank', 'woo-cepta'),
-			'keystone'      => __('Keystone Bank', 'woo-cepta'),
-			'mainstreet'    => __('MainStreet Bank', 'woo-cepta'),
-			'parallex'      => __('Parallex Bank', 'woo-cepta'),
-			'polaris'       => __('Polaris Bank Limited', 'woo-cepta'),
-			'providus'      => __('Providus Bank', 'woo-cepta'),
-			'stanbic'       => __('Stanbic IBTC Bank', 'woo-cepta'),
-			'standard'      => __('Standard Chartered Bank', 'woo-cepta'),
-			'sterling'      => __('Sterling Bank', 'woo-cepta'),
-			'suntrust'      => __('Suntrust Bank', 'woo-cepta'),
-			'union'         => __('Union Bank of Nigeria', 'woo-cepta'),
-			'uba'           => __('United Bank For Africa', 'woo-cepta'),
-			'unity'         => __('Unity Bank', 'woo-cepta'),
-			'wema'          => __('Wema Bank', 'woo-cepta'),
-			'zenith'        => __('Zenith Bank', 'woo-cepta'),
+			'access'     => __('Access Bank', 'woo-cepta'),
+			'alat'       => __('ALAT by WEMA', 'woo-cepta'),
+			'aso'        => __('ASO Savings and Loans', 'woo-cepta'),
+			'citibank'   => __('Citibank Nigeria', 'woo-cepta'),
+			'diamond'    => __('Access Bank (Diamond)', 'woo-cepta'),
+			'ecobank'    => __('Ecobank Nigeria', 'woo-cepta'),
+			'ekondo'     => __('Ekondo Microfinance Bank', 'woo-cepta'),
+			'enterprise' => __('Enterprise Bank', 'woo-cepta'),
+			'fidelity'   => __('Fidelity Bank', 'woo-cepta'),
+			'firstbank'  => __('First Bank of Nigeria', 'woo-cepta'),
+			'fcmb'       => __('First City Monument Bank', 'woo-cepta'),
+			'gtbank'     => __('Guaranty Trust Bank', 'woo-cepta'),
+			'heritage'   => __('Heritage Bank', 'woo-cepta'),
+			'jaiz'       => __('Jaiz Bank', 'woo-cepta'),
+			'keystone'   => __('Keystone Bank', 'woo-cepta'),
+			'mainstreet' => __('MainStreet Bank', 'woo-cepta'),
+			'parallex'   => __('Parallex Bank', 'woo-cepta'),
+			'polaris'    => __('Polaris Bank Limited', 'woo-cepta'),
+			'providus'   => __('Providus Bank', 'woo-cepta'),
+			'stanbic'    => __('Stanbic IBTC Bank', 'woo-cepta'),
+			'standard'   => __('Standard Chartered Bank', 'woo-cepta'),
+			'sterling'   => __('Sterling Bank', 'woo-cepta'),
+			'suntrust'   => __('Suntrust Bank', 'woo-cepta'),
+			'union'      => __('Union Bank of Nigeria', 'woo-cepta'),
+			'uba'        => __('United Bank For Africa', 'woo-cepta'),
+			'unity'      => __('Unity Bank', 'woo-cepta'),
+			'wema'       => __('Wema Bank', 'woo-cepta'),
+			'zenith'     => __('Zenith Bank', 'woo-cepta'),
 		);
 	}
 
 	/**
-	 * Display the selected payment icon.
+	 * Display the selected payment icon(s).
 	 */
 	public function get_icon()
 	{
-		$icon_html = '<img src="' . WC_HTTPS::force_https_url(WC_CEPTA_URL . '/assets/images/cepta.png') . '" alt="cepta" style="height: 40px; margin-right: 0.4em;margin-bottom: 0.6em;" />';
-		$icon      = $this->payment_icons;
+		$base_img   = trailingslashit(WC_CEPTA_URL) . 'assets/images/';
+		$icon_html  = '<img src="' . esc_url(WC_HTTPS::force_https_url($base_img . 'cepta.png')) . '" alt="' . esc_attr__('cepta', 'woo-cepta') . '" style="height:40px;margin-right:.4em;margin-bottom:.6em;" />';
 
-		if (is_array($icon)) {
+		$icons = is_array($this->payment_icons) ? $this->payment_icons : array();
+		$more  = '';
 
-			$additional_icon = '';
-
-			foreach ($icon as $i) {
-				$additional_icon .= '<img src="' . WC_HTTPS::force_https_url(WC_CEPTA_URL . '/assets/images/' . $i . '.png') . '" alt="' . $i . '" style="height: 40px; margin-right: 0.4em;margin-bottom: 0.6em;" />';
-			}
-
-			$icon_html .= $additional_icon;
+		foreach ($icons as $i) {
+			$img = $base_img . sanitize_file_name($i) . '.png';
+			$alt = preg_replace('/[^a-z0-9_\- ]/i', '', $i);
+			$more .= '<img src="' . esc_url(WC_HTTPS::force_https_url($img)) . '" alt="' . esc_attr($alt) . '" style="height:40px;margin-right:.4em;margin-bottom:.6em;" />';
 		}
 
+		$icon_html .= $more;
 		return apply_filters('woocommerce_gateway_icon', $icon_html, $this->id);
 	}
 
 	/**
-	 * Outputs scripts used for cepta payment.
+	 * Outputs scripts used for Cepta payment (localizes checkout params).
+	 * Assumes the actual JS (wc_cepta) is registered/enqueued elsewhere.
 	 */
 	public function payment_scripts()
 	{
-
-		if (isset($_GET['pay_for_order']) || !is_checkout_pay_page()) {
+		// Only on order pay page & for this gateway.
+		if (isset($_GET['pay_for_order']) || ! is_checkout_pay_page()) {
+			return;
+		}
+		if ('no' === $this->enabled) {
 			return;
 		}
 
-		if ($this->enabled === 'no') {
-			return;
-		}
-
-		// Verify the nonce before processing further
-		if (!isset($_GET['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['nonce'])), 'wc_cepta_payment_nonce')) {
+		// Nonce validation (passed via payment redirect).
+		if (! isset($_GET['nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['nonce'])), 'wc_cepta_payment_nonce')) {
 			wp_die(
 				esc_html__('Invalid request. Nonce verification failed.', 'text-domain'),
 				esc_html__('Error', 'text-domain'),
@@ -427,146 +420,114 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 			);
 		}
 
+		$order_key = '';
 		if (isset($_GET['key'])) {
-			$order_key = urldecode(sanitize_text_field(wp_unslash($_GET['key'])));
+			$order_key = rawurldecode(sanitize_text_field(wp_unslash($_GET['key'])));
 		}
 
-		$order_id  = absint(get_query_var('order-pay'));
+		$order_id = absint(get_query_var('order-pay'));
+		$order    = wc_get_order($order_id);
 
-		$order = wc_get_order($order_id);
-
-		if ($this->id !== $order->get_payment_method()) {
+		if (! $order || $this->id !== $order->get_payment_method()) {
 			return;
 		}
 
-		$suffix = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '.min';
-
+		// Make sure jQuery exists for any dependent scripts.
 		wp_enqueue_script('jquery');
 
-
 		$cepta_params = array(
-			'key' => $this->public_key,
+			'key' => $this->public_key, // from parent
 		);
 
 		if (is_checkout_pay_page() && get_query_var('order-pay')) {
 
-			$email = $order->get_billing_email();
-
-			$amount = $order->get_total();
-
-			$txnref = $order_id . '_' . time();
-
+			$email         = $order->get_billing_email();
+			$amount        = $order->get_total();
+			$txnref        = $order_id . '_' . time();
 			$the_order_id  = $order->get_id();
 			$the_order_key = $order->get_order_key();
 			$currency      = $order->get_currency();
 
-			if ($the_order_id == $order_id && $the_order_key == $order_key) {
-
+			if ((int) $the_order_id === (int) $order_id && $the_order_key === $order_key) {
 				$cepta_params['email']    = $email;
 				$cepta_params['amount']   = $amount;
 				$cepta_params['txnref']   = $txnref;
 				$cepta_params['currency'] = $currency;
 			}
 
-			if ($this->split_payment) {
-
+			// Split payment options.
+			if (! empty($this->split_payment)) {
 				$cepta_params['subaccount_code']     = $this->subaccount_code;
 				$cepta_params['charges_account']     = $this->charges_account;
-				$cepta_params['transaction_charges'] = $this->transaction_charges * 100;
+				if (isset($this->transaction_charges) && '' !== $this->transaction_charges) {
+					$cepta_params['transaction_charges'] = (float) $this->transaction_charges * 100;
+				}
 			}
 
-			if (in_array('bank', $this->payment_channels)) {
-				$cepta_params['bank_channel'] = 'true';
+			// Channels toggles.
+			$channels = isset($this->payment_channels) && is_array($this->payment_channels) ? $this->payment_channels : array();
+			if (in_array('bank', $channels, true)) {
+				$cepta_params['bank_channel']          = 'true';
 			}
-
-			if (in_array('card', $this->payment_channels)) {
-				$cepta_params['card_channel'] = 'true';
+			if (in_array('card', $channels, true)) {
+				$cepta_params['card_channel']          = 'true';
 			}
-
-			if (in_array('ussd', $this->payment_channels)) {
-				$cepta_params['ussd_channel'] = 'true';
+			if (in_array('ussd', $channels, true)) {
+				$cepta_params['ussd_channel']          = 'true';
 			}
-
-			if (in_array('qr', $this->payment_channels)) {
-				$cepta_params['qr_channel'] = 'true';
+			if (in_array('qr', $channels, true)) {
+				$cepta_params['qr_channel']            = 'true';
 			}
-
-			if (in_array('bank_transfer', $this->payment_channels)) {
+			if (in_array('bank_transfer', $channels, true)) {
 				$cepta_params['bank_transfer_channel'] = 'true';
 			}
 
-			if ($this->banks) {
-
-				$cepta_params['banks_allowed'] = $this->banks;
+			// Allow lists (banks/cards).
+			if (isset($this->banks) && is_array($this->banks) && $this->banks) {
+				$cepta_params['banks_allowed'] = array_map('sanitize_text_field', $this->banks);
+			}
+			if (isset($this->cards) && is_array($this->cards) && $this->cards) {
+				$cepta_params['cards_allowed'] = array_map('sanitize_text_field', $this->cards);
 			}
 
-			if ($this->cards) {
-
-				$cepta_params['cards_allowed'] = $this->cards;
-			}
-
-			if ($this->custom_metadata) {
-
-				if ($this->meta_order_id) {
-
+			// Optional metadata.
+			if (! empty($this->custom_metadata)) {
+				if (! empty($this->meta_order_id)) {
 					$cepta_params['meta_order_id'] = $order_id;
 				}
-
-				if ($this->meta_name) {
-
-					$cepta_params['meta_name'] = $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
+				if (! empty($this->meta_name)) {
+					$cepta_params['meta_name'] = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
 				}
-
-				if ($this->meta_email) {
-
+				if (! empty($this->meta_email)) {
 					$cepta_params['meta_email'] = $email;
 				}
-
-				if ($this->meta_phone) {
-
+				if (! empty($this->meta_phone)) {
 					$cepta_params['meta_phone'] = $order->get_billing_phone();
 				}
-
-				if ($this->meta_products) {
-
+				if (! empty($this->meta_products)) {
 					$line_items = $order->get_items();
-
-					$products = '';
-
-					foreach ($line_items as $item_id => $item) {
-						$name      = $item['name'];
-						$quantity  = $item['qty'];
-						$products .= $name . ' (Qty: ' . $quantity . ')';
-						$products .= ' | ';
+					$products   = array();
+					foreach ($line_items as $item) {
+						$name     = isset($item['name']) ? $item['name'] : '';
+						$quantity = isset($item['qty']) ? (int) $item['qty'] : 0;
+						if ($name) {
+							$products[] = sprintf('%s (Qty: %d)', $name, $quantity);
+						}
 					}
-
-					$products = rtrim($products, ' | ');
-
-					$cepta_params['meta_products'] = $products;
-				}
-
-				if ($this->meta_billing_address) {
-
-					$billing_address = $order->get_formatted_billing_address();
-					$billing_address = esc_html(preg_replace('#<br\s*/?>#i', ', ', $billing_address));
-
-					$cepta_params['meta_billing_address'] = $billing_address;
-				}
-
-				if ($this->meta_shipping_address) {
-
-					$shipping_address = $order->get_formatted_shipping_address();
-					$shipping_address = esc_html(preg_replace('#<br\s*/?>#i', ', ', $shipping_address));
-
-					if (empty($shipping_address)) {
-
-						$billing_address = $order->get_formatted_billing_address();
-						$billing_address = esc_html(preg_replace('#<br\s*/?>#i', ', ', $billing_address));
-
-						$shipping_address = $billing_address;
+					if ($products) {
+						$cepta_params['meta_products'] = implode(' | ', $products);
 					}
-
-					$cepta_params['meta_shipping_address'] = $shipping_address;
+				}
+				if (! empty($this->meta_billing_address)) {
+					$billing = esc_html(preg_replace('#<br\s*/?>#i', ', ', $order->get_formatted_billing_address()));
+					$cepta_params['meta_billing_address'] = $billing;
+				}
+				if (! empty($this->meta_shipping_address)) {
+					$shipping = esc_html(preg_replace('#<br\s*/?>#i', ', ', $order->get_formatted_shipping_address()));
+					if (empty($shipping)) {
+						$shipping = esc_html(preg_replace('#<br\s*/?>#i', ', ', $order->get_formatted_billing_address()));
+					}
+					$cepta_params['meta_shipping_address'] = $shipping;
 				}
 			}
 
@@ -574,23 +535,21 @@ class WC_Gateway_Custom_Cepta extends WC_Gateway_Cepta_Subscriptions
 			$order->save();
 		}
 
+		// Provide params to your frontend script (must be registered/enqueued elsewhere).
 		wp_localize_script('wc_cepta', 'wc_cepta_params', $cepta_params);
 	}
 
 	/**
-	 * Add custom gateways to the checkout page.
+	 * Add/remove this gateway from checkout list at runtime.
 	 *
-	 * @param $available_gateways
-	 *
-	 * @return mixed
+	 * @param array $available_gateways
+	 * @return array
 	 */
 	public function add_gateway_to_checkout($available_gateways)
 	{
-
-		if ($this->enabled == 'no') {
+		if ('no' === $this->enabled) {
 			unset($available_gateways[$this->id]);
 		}
-
 		return $available_gateways;
 	}
 }

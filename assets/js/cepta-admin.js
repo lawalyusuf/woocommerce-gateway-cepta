@@ -1,152 +1,163 @@
+/*!
+ * CeptaPay – WooCommerce Admin UI helpers
+ * - Toggles settings (test keys, split payment, metadata, channel filters)
+ * - Select2 icon rendering and secret-key show/hide
+ * - Keeps original behavior, tightened selectors & checks
+ */
 jQuery(function ($) {
   "use strict";
 
-  /**
-   * Object to handle cepta admin functions.
-   */
-  var wc_cepta_admin = {
-    /**
-     * Initialize.
-     */
-    init: function () {
-      // Toggle api key settings.
-      $(document.body).on("change", "#woocommerce_cepta_testmode", function () {
-        var test_secret_key = $("#woocommerce_cepta_test_secret_key")
-            .parents("tr")
-            .eq(0),
-          live_secret_key = $("#woocommerce_cepta_live_secret_key")
-            .parents("tr")
-            .eq(0);
-
-        if ($(this).is(":checked")) {
-          test_secret_key.show();
-          live_secret_key.hide();
-        } else {
-          test_secret_key.hide();
-          live_secret_key.show();
-        }
-      });
-
-      $("#woocommerce_cepta_testmode").change();
-
+  const Admin = {
+    init() {
+      // Test mode: toggle which secret key row shows.
       $(document.body).on(
         "change",
-        ".woocommerce_cepta_split_payment",
-        function () {
-          var subaccount_code = $(".woocommerce_cepta_subaccount_code")
-              .parents("tr")
-              .eq(0),
-            subaccount_charge = $(
-              ".woocommerce_cepta_split_payment_charge_account"
-            )
-              .parents("tr")
-              .eq(0),
-            transaction_charge = $(
-              ".woocommerce_cepta_split_payment_transaction_charge"
-            )
-              .parents("tr")
-              .eq(0);
-
-          if ($(this).is(":checked")) {
-            subaccount_code.show();
-            subaccount_charge.show();
-            transaction_charge.show();
-          } else {
-            subaccount_code.hide();
-            subaccount_charge.hide();
-            transaction_charge.hide();
-          }
-        }
+        "#woocommerce_cepta_testmode",
+        Admin.toggleKeys
       );
+      $("#woocommerce_cepta_testmode").trigger("change");
 
-      $("#woocommerce_cepta_split_payment").change();
+      // Split payment: toggle relevant rows.
+      $(document.body).on(
+        "change",
+        ".woocommerce_cepta_split_payment, #woocommerce_cepta_split_payment",
+        Admin.toggleSplitPayment
+      );
+      $("#woocommerce_cepta_split_payment").trigger("change");
 
-      // Toggle Custom Metadata settings.
+      // Custom metadata: toggle all metadata rows.
       $(".wc-cepta-metadata")
-        .change(function () {
-          if ($(this).is(":checked")) {
-            $(
-              ".wc-cepta-meta-order-id, .wc-cepta-meta-name, .wc-cepta-meta-email, .wc-cepta-meta-phone, .wc-cepta-meta-billing-address, .wc-cepta-meta-shipping-address, .wc-cepta-meta-products"
-            )
-              .closest("tr")
-              .show();
-          } else {
-            $(
-              ".wc-cepta-meta-order-id, .wc-cepta-meta-name, .wc-cepta-meta-email, .wc-cepta-meta-phone, .wc-cepta-meta-billing-address, .wc-cepta-meta-shipping-address, .wc-cepta-meta-products"
-            )
-              .closest("tr")
-              .hide();
-          }
-        })
-        .change();
+        .on("change", Admin.toggleMetadata)
+        .trigger("change");
 
-      // Toggle Bank filters settings.
+      // Channel filters: show card/bank allowlists only when card channel is selected.
       $(".wc-cepta-payment-channels")
-        .on("change", function () {
-          var channels = $(".wc-cepta-payment-channels").val();
+        .on("change", Admin.toggleChannelFilters)
+        .trigger("change");
 
-          if ($.inArray("card", channels) != "-1") {
-            $(".wc-cepta-cards-allowed").closest("tr").show();
-            $(".wc-cepta-banks-allowed").closest("tr").show();
-          } else {
-            $(".wc-cepta-cards-allowed").closest("tr").hide();
-            $(".wc-cepta-banks-allowed").closest("tr").hide();
-          }
-        })
-        .change();
+      // Select2 rendering for payment icons (safe if select2 exists).
+      if ($.fn.select2) {
+        $(".wc-cepta-payment-icons").select2({
+          templateResult: Admin.renderIconOption,
+          templateSelection: Admin.renderIconSelection,
+          width: "resolve",
+        });
+      }
 
-      $(".wc-cepta-payment-icons").select2({
-        templateResult: formatCeptaPaymentIcons,
-        templateSelection: formatCeptaPaymentIconDisplay,
-      });
-
-      $(
+      // Secret key reveal/hide buttons (append once).
+      Admin.addSecretToggle(
         "#woocommerce_cepta_test_secret_key, #woocommerce_cepta_live_secret_key"
-      ).after(
-        '<button class="wc-cepta-toggle-secret" style="height: 30px; margin-left: 2px; cursor: pointer"><span class="dashicons dashicons-visibility"></span></button>'
       );
+      $(document.body).on(
+        "click",
+        ".wc-cepta-toggle-secret",
+        Admin.toggleSecretField
+      );
+    },
 
-      $(".wc-cepta-toggle-secret").on("click", function (event) {
-        event.preventDefault();
+    // --- Handlers ---
+    toggleKeys() {
+      const isTest = $(this).is(":checked");
+      const testRow = $("#woocommerce_cepta_test_secret_key").closest("tr");
+      const liveRow = $("#woocommerce_cepta_live_secret_key").closest("tr");
+      testRow.toggle(!!isTest);
+      liveRow.toggle(!isTest);
+    },
 
-        let $dashicon = $(this).closest("button").find(".dashicons");
-        let $input = $(this).closest("tr").find(".input-text");
-        let inputType = $input.attr("type");
+    toggleSplitPayment() {
+      const checked = $(this).is(":checked");
+      const $subacct = $(".woocommerce_cepta_subaccount_code").closest("tr");
+      const $chargeAcct = $(
+        ".woocommerce_cepta_split_payment_charge_account"
+      ).closest("tr");
+      const $txnCharge = $(
+        ".woocommerce_cepta_split_payment_transaction_charge"
+      ).closest("tr");
+      $subacct.toggle(checked);
+      $chargeAcct.toggle(checked);
+      $txnCharge.toggle(checked);
+    },
 
-        if ("text" == inputType) {
-          $input.attr("type", "password");
-          $dashicon.removeClass("dashicons-hidden");
-          $dashicon.addClass("dashicons-visibility");
-        } else {
-          $input.attr("type", "text");
-          $dashicon.removeClass("dashicons-visibility");
-          $dashicon.addClass("dashicons-hidden");
-        }
+    toggleMetadata() {
+      const sel =
+        ".wc-cepta-meta-order-id, .wc-cepta-meta-name, .wc-cepta-meta-email, .wc-cepta-meta-phone, .wc-cepta-meta-billing-address, .wc-cepta-meta-shipping-address, .wc-cepta-meta-products";
+      $(sel).closest("tr").toggle($(this).is(":checked"));
+    },
+
+    toggleChannelFilters() {
+      const channels = $(".wc-cepta-payment-channels").val() || [];
+      const hasCard = channels.indexOf("card") !== -1;
+      $(".wc-cepta-cards-allowed").closest("tr").toggle(hasCard);
+      $(".wc-cepta-banks-allowed").closest("tr").toggle(hasCard);
+    },
+
+    addSecretToggle(selector) {
+      $(selector).each(function () {
+        const $input = $(this);
+        // Avoid duplicate buttons if re-initialized.
+        if ($input.next(".wc-cepta-toggle-secret").length) return;
+        $input.after(
+          '<button type="button" class="wc-cepta-toggle-secret button-secondary" style="height:30px;margin-left:6px;">' +
+            '<span class="dashicons dashicons-visibility" aria-hidden="true"></span>' +
+            "</button>"
+        );
       });
+    },
+
+    toggleSecretField(e) {
+      e.preventDefault();
+      const $btn = $(this);
+      const $icon = $btn.find(".dashicons");
+      const $input = $btn
+        .closest("tr")
+        .find("input.input-text, input[type='password'], input[type='text']")
+        .first();
+      const type = ($input.attr("type") || "").toLowerCase();
+      const toType = type === "text" ? "password" : "text";
+
+      $input.attr("type", toType);
+      $icon.toggleClass("dashicons-visibility dashicons-hidden");
+    },
+
+    // --- Select2 templates ---
+    renderIconOption(option) {
+      if (!option.id) return option.text;
+      const safeVal = String(option.element.value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9_\-]/g, "");
+      const src =
+        (window.wc_cepta_admin_params?.plugin_url || "") +
+        "/assets/images/" +
+        safeVal +
+        ".png";
+      return $(
+        '<span><img src="' +
+          src +
+          '" alt="" style="height:15px;width:18px;object-fit:contain;margin-right:6px;" />' +
+          Admin.escape(option.text) +
+          "</span>"
+      );
+    },
+
+    renderIconSelection(option) {
+      return option.text;
+    },
+
+    // --- Utils ---
+    escape(s) {
+      return String(s).replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          }[c])
+      );
     },
   };
 
-  function formatCeptaPaymentIcons(payment_method) {
-    if (!payment_method.id) {
-      return payment_method.text;
-    }
-
-    var $payment_method = $(
-      '<span><img src=" ' +
-        wc_cepta_admin_params.plugin_url +
-        "/assets/images/" +
-        payment_method.element.value.toLowerCase() +
-        '.png" class="img-flag" style="height: 15px; weight:18px;" /> ' +
-        payment_method.text +
-        "</span>"
-    );
-
-    return $payment_method;
-  }
-
-  function formatCeptaPaymentIconDisplay(payment_method) {
-    return payment_method.text;
-  }
-
-  wc_cepta_admin.init();
+  Admin.init();
 });

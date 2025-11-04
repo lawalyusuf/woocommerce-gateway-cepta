@@ -1,146 +1,122 @@
 # Cepta Payment Gateway for WooCommerce
 
-Contributors: lawalyusuf
+**Contributors:** [lawalyusuf](https://github.com/lawalyusuf)  
+**Donate link:** [https://cepta.co](https://cepta.co)  
+**Tags:** cepta, woocommerce, payment gateway, payments, cards, visa, mastercard  
+**Requires PHP:** 7.4+  
+**Requires WordPress:** 6.2+  
+**Tested up to:** 10.3.3  
+**Stable tag:** 1.0.0  
+**License:** GPLv2 or later  
+**License URI:** [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
 
-Donation link: https://cepta.co
+---
 
-Tags: cepta, woocommerce, payment gateway, payments, cards, visa, mastermastercard
+### Accept Payments Seamlessly with Cepta
 
-Requires PHP: 7.4+
+Cepta WooCommerce Payment Gateway provides secure and seamless **card** and **account transfer** processing for fast, reliable, and efficient transactions.
 
-Requires at least: 6.2
+---
 
-Tested up to: 10.3.3
+## Introduction
 
-Stable tag: 1.0.0
+The Cepta WooCommerce Payment Gateway integrates Cepta’s Payment API into your store to handle payments quickly and securely.
 
-License: GPLv2 or later
+With Cepta for WooCommerce, you can accept:
 
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+- **Credit/Debit Cards** — Accept Visa and Mastercard.
+- **Localized Payment Options** — Enable region-specific payment methods.
+- **Bank Transfers** — Let customers pay directly from their accounts.
 
-# Introduction
-
-Cepta WooCommerce Payment Gateway provides secure, seamless card and account transfer processing for quick and efficient transactions.
-
-With Cepta for WooCommerce, you can securely accept payments via:
-
-- Credit/Debit Cards — Accept Visa and Mastercard.
-
-- Localized Payment Options — Enable local payment methods specific to your operating regions:
-
-- Bank Transfer
+---
 
 ## Why Choose Cepta?
 
-- Quick Integration: Go from installation to accepting your first transaction in minutes with our guided setup wizard.
+- **Quick Integration:** Start accepting payments within minutes using the setup wizard.
+- **Transparent Pricing:** Simple, competitive rates without hidden fees.
+- **Optimized Conversion:** A modern, embedded checkout experience designed for speed and reduced abandonment.
+- **Advanced Risk Management:** Cepta’s proprietary fraud detection engine actively screens transactions to prevent chargebacks.
+- **Merchant Dashboard:** A single dashboard to track sales, customers, and settlements.
+- **Dedicated 24/7 Support:** Always-on support via chat and email.
+- **Developer Friendly:** Comprehensive SDKs and API documentation for building custom payment flows.
 
-- Transparent and Competitive Pricing
+---
 
-- Optimized Conversion: Utilize the modern, embedded Cepta Checkout experience designed for speed and minimizing checkout abandonment.
+## Getting Started
 
-- Advanced Risk Management: Cepta's proprietary fraud detection engine actively screens transactions to protect your business and reduce chargebacks.
+### Installation
 
-- Powerful Merchant Dashboard: Get a clear, elegant overview of your sales, customer data, and settlement history in a centralized dashboard.
+1. Download the plugin `.zip` file.
+2. In WordPress Admin, go to **Plugins → Add New → Upload Plugin**.
+3. Choose the file and click **Install Now**, then **Activate**.
+4. Navigate to **WooCommerce → Settings → Payments**.
+5. Locate **Cepta Payment Gateway** and click **Manage** to configure it.
 
-- Dedicated Support: Access a responsive and knowledgeable merchant support team, available 24/7 via chat and email.
+### Configuration
 
-- Developer Friendly: Clearly documented SDKs and APIs empower developers to build fully customized payment flows tailored to their business needs.
+To configure the plugin:
 
-# Getting Started
+1. Go to **WooCommerce → Settings → Payments**.
+2. Select **Cepta Payment Gateway**.
+3. Adjust the following options:
 
-1.  Installation process
+| Setting            | Description                                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| **Enable/Disable** | Toggle Cepta as a payment option.                                                                     |
+| **Title**          | What customers see during checkout.                                                                   |
+| **Description**    | Message under payment fields (e.g., supported cards).                                                 |
+| **Test Mode**      | Enables sandbox testing before going live.                                                            |
+| **Sandbox Keys**   | Enter test API keys from Cepta Dashboard → _Settings → API Credentials_.                              |
+| **Live Keys**      | Enter live API keys from your Cepta account.                                                          |
+| **Payment Option** | Choose **Inline Checkout** (Direct pay on your site - checkout.) or **Redirect** (Cepta-hosted site). |
 
-    1.  Download the plugin zip file
-    2.  Login to your WordPress Admin. Click on "Plugins > Add New" from the left hand menu.
-    3.  Click on the "Upload" option, then click "Choose File" to select the zip file from your computer. Once selected, press "OK" and press the "Install Now" button.
-    4.  Activate the plugin.
-    5.  Open the settings page for WooCommerce and click the "Payment" tab.
-    6.  Configure your Cepta Payment Gateway settings. See below for details.
+> 💡 **Note:** Click **Save Changes** to apply your settings.
 
-        Configure the plugin:
+If Cepta doesn’t appear in checkout options:
 
-        To configure the plugin, go to WooCommerce > Settings from the left hand menu, then click Checkout from the top tab. You will see Cepta Payment Gateway as part of the available Checkout Options. Click on it to Manage to configure the Cepta payment gateway.
+- Ensure **Enable/Disable** is checked.
+- Confirm that **API Keys** are entered correctly.
+- Click **Save Changes** again.
 
-        > Enable/Disable - check the box to enable CeptaPayment Gateway.
-        > Title - allows you to determine what your customers will see this payment option as on the checkout page.
-        > Description - controls the message that appears under the payment fields on the checkout page. Here you can list the types of cards you accept.
-        > Test Mode - Check to enable test mode. Test mode enables you to test payments before going live. If you ready to start receving real payment on your site, kindly uncheck this.
-        > Sandbox - Enter your sandbox Keys here. Get your API Keys from your Cepta account under Settings > [API Credentials](<[url](https://app.cepta.co/)>)
-        > Live Keys - Enter your Live Keys here. Get your API Keys from your Cepta account under Settings > [API Credentials](<[url](https://app.cepta.co/)>)
-        > Payment Option - Inline Checkout lets customers pay directly on your site, while Redirect takes them to Cepta to complete payment.
-        > Click on Save Changes for the changes you made to be effected.
+---
 
-        If Cepta is not available in your payment method options, please check the following settings in your WooCommerce and plugin configuration:
+### Software Dependencies
 
-        - You've checked the **"Enable/Disable"** checkbox
-        - You've entered your **API Keys** in the appropriate field
-        - You've clicked on **Save Changes** during setup
+- WooCommerce plugin must be installed and activated.
+- You must have an active **Cepta merchant account**.
+- Compatible with **WooCommerce v8.0+** and WordPress **6.2+**.
 
-2.  Software dependencies
+---
 
-    1. You need to have WooCommerce plugin installed and activated on your WordPress site.
-    2. You need to open a Cepta account
-    3. works with WooCommerce v8.0 and above
+### Latest Release
 
-3.  Latest releases
+- **Version 1.0.0** — _October 20, 2025_
 
-    1. 1.0.0 - October 20, 2025.
+---
 
-4.  API references
+### API References
 
-    - https://docs.cepta.co/api-reference/introduction
+- [Cepta API Documentation](https://docs.cepta.co/api-reference/introduction)
+- [Cepta Website](https://cepta.co)
 
-    - https://cepta.co/
+---
 
-# Build and Test
+## Screenshots
 
-Describe and show how to build your code and run the tests.
-
-# Contribute
-
-If you discover a bug or have a solution to improve the Cepta Payment Gateway for the WooCommerce plugin,
-we welcome your contributions to enhance the code.
-
-- Visit our GitHub repository: [https://github.com/lawalyusuf/woocommerce-gateway-cepta]
-
-- Create a detailed bug report or feature request in the "Issues" section.
-
-- If you have a code improvement or bug fix, feel free to submit a pull request.
-
-       * Fork the repository on GitHub
-
-       * Clone the repository into your local system and create a branch that describes what you are working on by pre-fixing with feature-name.
-
-       * Make the changes to your forked repository's branch. Ensure you are using PHP Coding Standards (PHPCS).
-
-       * Make commits that are descriptive and breaks down the process for better understanding.
-
-       * Push your fix to the remote version of your branch and create a PR that aims to merge that branch into master.
-
-       * After you follow the step above, the next stage will be waiting on us to merge your Pull Request.
-
-Your contributions help us make the PG plugin even better for the community. Thank you!
-
-# Screenshots
-
-### 1. Cepta WooCommerce Setting Page
+### 1. Cepta Woo Setting Page
 
 ###
 
-![Screenshot 1]
+![Screenshot 1](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/staging/assets/images/Screenshot-cepta-img6.png)
 
-### 2. Cepta WooCommerce Checkout page
+### 2. Cepta Woo Checkout page
 
 ###
 
-![Screenshot 2]
+![Screenshot 2](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/staging/assets/images/Screenshot-cepta-img9.png)
 
 ### 3. Cepta Inline Checkout
 
 ###
 
-![Screenshot 3]
-
-###
-
-![Screenshot 4]
+![Screenshot 3](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/staging/assets/images/Screenshot-cepta-img10.png)

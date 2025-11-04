@@ -1,393 +1,416 @@
 /**
- * WooCommerce Cepta Payment Gateway Client Script
+ * CeptaPay WooCommerce Frontend
+ * Requires: jQuery, window.CeptaPay, wc_cepta_params (injected by PHP)
  */
 
 jQuery(function ($) {
-  /**
-   * Prepares an array of metadata objects for the payment gateway.
-   * @returns {Array<object>} An array of meta objects.
-   */
+  // --- Config ---
+  const POLL_DELAY_MS = 30000; // first poll wait
+  const POLL_INTERVAL_MS = 3000; // poll cadence
+  const ALLOWED_ORIGINS = (wc_cepta_params.allowed_origins || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const ENFORCE_ORIGINS = ALLOWED_ORIGINS.length > 0;
 
-  function prepareMetadata() {
-    let metadata = [
-      {
-        display_name: "Plugin",
-        variable_name: "plugin",
-        value: "woo-cepta",
-      },
-    ];
+  // --- State ---
+  let delayTimeoutId = null;
+  let pollIntervalId = null;
+  let pollStarted = false;
+  let userClosed = false;
+  let callbackFired = false;
+  let activeRef = null;
+  let initFired = false;
 
-    wc_cepta_params.meta_order_id &&
-      metadata.push({
-        display_name: "Order ID",
-        variable_name: "order_id",
-        value: wc_cepta_params.meta_order_id,
-      });
-    wc_cepta_params.meta_name &&
-      metadata.push({
-        display_name: "Customer Name",
-        variable_name: "customer_name",
-        value: wc_cepta_params.meta_name,
-      });
-    wc_cepta_params.meta_email &&
-      metadata.push({
-        display_name: "Customer Email",
-        variable_name: "customer_email",
-        value: wc_cepta_params.meta_email,
-      });
-    wc_cepta_params.meta_phone &&
-      metadata.push({
-        display_name: "Customer Phone",
-        variable_name: "customer_phone",
-        value: wc_cepta_params.meta_phone,
-      });
-    wc_cepta_params.meta_billing_address &&
-      metadata.push({
-        display_name: "Billing Address",
-        variable_name: "billing_address",
-        value: wc_cepta_params.meta_billing_address,
-      });
-    wc_cepta_params.meta_shipping_address &&
-      metadata.push({
-        display_name: "Shipping Address",
-        variable_name: "shipping_address",
-        value: wc_cepta_params.meta_shipping_address,
-      });
-    wc_cepta_params.meta_products &&
-      metadata.push({
-        display_name: "Products",
-        variable_name: "products",
-        value: wc_cepta_params.meta_products,
-      });
-
-    return metadata;
+  // --- UI helpers: spinner overlay + modal ---
+  function showLoading() {
+    if ($("#loading-spinner").length) return;
+    $("body").append(
+      "<style>.spinner-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);display:flex;justify-content:center;align-items:center;z-index:9999}.spinner{border:4px solid rgba(0,0,0,.1);border-top:4px solid #3498db;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style>" +
+        '<div id="loading-spinner" class="spinner-overlay"><div class="spinner"></div></div>'
+    );
+    $("#wc-cepta-form").hide();
   }
-
-  /**
-   * Retrieves custom filters (banks and card brands).
-   * @returns {object} An object containing 'banks' and 'card_brands' if enabled.
-   */
-  function getCustomFilters() {
-    let filters = {};
-    if (wc_cepta_params.card_channel) {
-      if (wc_cepta_params.banks_allowed) {
-        filters.banks = wc_cepta_params.banks_allowed;
-      }
-      if (wc_cepta_params.cards_allowed) {
-        filters.card_brands = wc_cepta_params.cards_allowed;
-      }
-    }
-    return filters;
+  function hideLoading() {
+    $("#loading-spinner").remove();
   }
-
-  /**
-   * Determines the payment channels to be enabled.
-   * @returns {Array<string>} An array of enabled channel names.
-   */
-  function getEnabledChannels() {
-    let channels = [];
-    wc_cepta_params.bank_channel && channels.push("bank");
-    wc_cepta_params.card_channel && channels.push("card");
-    wc_cepta_params.ussd_channel && channels.push("ussd");
-    wc_cepta_params.qr_channel && channels.push("qr");
-    wc_cepta_params.bank_transfer_channel && channels.push("bank_transfer");
-    return channels;
-  }
-
-  /**
-   * Displays a custom modal with a message and an OK button that redirects.
-   * @param {string} message - The message to display inside the modal.
-   * @param {string} redirectUrl - The URL to redirect to when the 'OK' button is clicked.
-   */
-  function displayModal(message, redirectUrl) {
-    // Remove any previous modal
+  function modal(message, redirectUrl) {
     $(".modal-overlay").remove();
-
-    const modalHtml = `
-            <style>
-                /* ... (Styles from original code) ... */
-                .modal-overlay {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center;
-                    z-index: 10000;
-                }
-                .cepta-modal-container {
-                    background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-                    position: relative; max-width: 400px; width: 90%; z-index: 10001; 
-                }
-                .modal-content {
-                    padding: 20px; text-align: center;
-                }
-                .modal-footer {
-                    padding: 10px 20px 20px;
-                    display: flex; justify-content: flex-end;
-                }
-                .btn-primary {
-                    background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;
-                }
-            </style>
-            <div class="modal-overlay">
-                <div class="cepta-modal-container">
-                    <div class="modal-content">
-                        <p>${message}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" id="okButton">OK</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    $("body").append(modalHtml);
-
-    // Setup redirect on OK button click
-    $("#okButton").on("click", function () {
+    const html =
+      "<style>.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:10000}.cepta-modal{background:#fff;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);max-width:420px;width:92%}.modal-content{padding:20px;text-align:center}.modal-footer{padding:10px 20px 20px;display:flex;justify-content:flex-end}.btn-primary{background:#3498db;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer}</style>" +
+      `<div class="modal-overlay"><div class="cepta-modal"><div class="modal-content"><p>${message}</p></div><div class="modal-footer"><button type="button" class="btn btn-primary" id="okButton">OK</button></div></div></div>`;
+    $("body").append(html);
+    $("#okButton").on("click", () => {
       window.location.href = redirectUrl;
     });
   }
 
-  /**
-   * Displays a temporary loading spinner overlay while verifying status.
-   */
-  function showVerificationSpinner() {
-    if ($("#loading-spinner").length) return; // Prevent duplicates
-
-    const spinnerHtml = `
-            <style>
-                /* ... (Styles from original code) ... */
-                .spinner-overlay {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center;
-                    z-index: 9999;
-                }
-                .spinner {
-                    border: 4px solid rgba(0, 0, 0, 0.1); border-top: 4px solid #3498db;
-                    border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            </style>
-            <div id="loading-spinner" class="spinner-overlay">
-                <div class="spinner"></div>
-            </div>
-        `;
-    $("body").append(spinnerHtml);
-    $("#wc-cepta-form").show();
+  // --- Pay Now button loading state ---
+  function $payBtn() {
+    return $("#cepta-payment-button");
   }
 
-  /**
-   * Removes the loading spinner.
-   */
-  function removeSpinner() {
-    $("#loading-spinner").remove();
+  function setButtonLoading() {
+    const $btn = $payBtn();
+    if (!$btn.length) return;
+
+    if (!$btn.data("orig-text")) {
+      $btn.data("orig-text", $.trim($btn.text()));
+    }
+
+    if (!$btn.data("locked-width")) {
+      const w = $btn.outerWidth();
+      $btn.css("width", w + "px");
+      $btn.data("locked-width", true);
+    }
+
+    if (!$btn.data("orig-pointer-events")) {
+      $btn.data("orig-pointer-events", $btn.css("pointer-events") || "");
+    }
+    $btn.css("pointer-events", "none");
+
+    $btn.text("WAIT…");
   }
 
-  /**
-   * Handles the secure AJAX call to the server to verify a payment status.
-   * @param {string} transactionRef - The unique reference of the transaction to verify.
-   */
+  function clearButtonLoading() {
+    const $btn = $payBtn();
+    if (!$btn.length) return;
+
+    const orig = $btn.data("orig-text");
+    $btn.text(orig || "Pay Now");
+
+    // Release pointer events
+    const origPE = $btn.data("orig-pointer-events");
+    $btn.css("pointer-events", origPE || "");
+    $btn.removeData("orig-pointer-events");
+
+    if ($btn.data("locked-width")) {
+      $btn.css("width", "");
+      $btn.removeData("locked-width");
+    }
+  }
+
+  // --- Timers ---
+  function stopDelay() {
+    if (delayTimeoutId) {
+      clearTimeout(delayTimeoutId);
+      delayTimeoutId = null;
+    }
+  }
+  function stopPolling() {
+    if (pollIntervalId) {
+      clearInterval(pollIntervalId);
+      pollIntervalId = null;
+    }
+    stopDelay();
+    pollStarted = false;
+  }
+
+  // --- Messaging helpers ---
+  function postTarget() {
+    if (window.parent && window.parent !== window) return window.parent;
+    if (window.opener && !window.opener.closed) return window.opener;
+    return window.top || window;
+  }
+  function broadcast(eventType, ref) {
+    const payload = { event: eventType, transactionRef: ref || activeRef };
+    const tgt = postTarget();
+    try {
+      tgt.postMessage(payload, "*");
+      tgt.postMessage(JSON.stringify(payload), "*");
+    } catch {}
+  }
+  function closeSdk(reason) {
+    try {
+      if (window.CeptaPay?.closeModal)
+        window.CeptaPay.closeModal(reason || "close");
+      console.warn("[CeptaPay] CLOSE IFRAME MODAL.");
+    } catch {}
+  }
+  function fireOnce(eventType, ref) {
+    if (callbackFired) return;
+    callbackFired = true;
+    stopPolling();
+    closeSdk(eventType);
+    if (
+      eventType === "success" ||
+      eventType === "failed" ||
+      eventType === "close"
+    )
+      broadcast(eventType, ref);
+    else broadcast(eventType, ref);
+  }
+
+  // --- Verify (server) ---
   function verifyTransaction(transactionRef) {
-    showVerificationSpinner();
+    const ref = transactionRef || activeRef;
+    if (!ref)
+      return console.warn("[CeptaPay] verifyTransaction called without ref.");
 
-    const orderId = wc_cepta_params.meta_order_id;
-    const nonce = wc_cepta_params.nonce;
-    const verificationUrl = "/wc-api/wc_gateway_cepta_popup"; // Your PHP endpoint
+    showLoading();
+    const endpoint = "/wc-api/wc_gateway_cepta_popup"; // server handler
 
     $.ajax({
-      url: verificationUrl,
+      url: endpoint,
       method: "POST",
-      data: {
-        transactionRef: transactionRef,
-        ceptaOderId: orderId,
-        wc_cepta_payment_nonce: nonce,
-      },
       dataType: "json",
-      success: function (response) {
-        // Determine the redirection URL (likely the success page for the order)
-        let redirectUrl = wc_cepta_params.checkout_url; // Use the localized checkout URL or something similar for fallback
-
-        // Construct a better base URL for redirection (if order completion is needed)
-        if (wc_cepta_params.hasOwnProperty("return_url")) {
-          redirectUrl = wc_cepta_params.return_url;
-        } else {
-          // Fallback to home/cart if no specific return_url is localized
-          redirectUrl = window.location.href.replace(
-            /\/checkout\/order-pay\/\d+\/.*/,
-            ""
-          );
-        }
-
-        if (response.statusRes === true) {
-          displayModal(
-            `Your payment for order #${orderId} is successful and confirmed! Click OK to proceed.`,
-            redirectUrl
-          );
-        } else {
-          displayModal(
-            `Your payment for order #${orderId} has failed. Please try again.`,
-            redirectUrl
-          );
-        }
+      data: {
+        transactionRef: ref,
+        // Keep typo to match backend param name:
+        ceptaOderId: wc_cepta_params.meta_order_id,
+        wc_cepta_payment_nonce: wc_cepta_params.nonce,
       },
-      error: function (xhr, status, error) {
-        console.error("Verification AJAX Error:", status, error);
-        displayModal(
-          `An unexpected error occurred during verification. Please contact support.`,
+      success: function (res) {
+        const redirect =
+          res.statusRes === true && res.redirect
+            ? res.redirect
+            : wc_cepta_params.checkout_url || window.location.href;
+        window.location.href = redirect;
+      },
+      error: function (xhr, status, err) {
+        console.error("Verification AJAX Error:", status, err);
+        modal(
+          "An unexpected error occurred during verification. Please contact support.",
           wc_cepta_params.checkout_url || window.location.href
         );
       },
-      complete: function () {
-        removeSpinner();
-      },
+      complete: hideLoading,
     });
   }
 
-  /**
-   * initiate payment process.
-   */
-  async function initCeptaPayment() {
-    $("#wc-cepta-form").hide();
+  // --- Restore WC buttons  ---
+  function restorePayNow() {
+    $("#wc-cepta-form").show();
     $("form#payment-form, form#order_review")
       .find("input.cepta_txnref")
       .val("");
+    $("#cepta-payment-button")
+      .off("click")
+      .on("click", function (e) {
+        e.preventDefault();
+        setButtonLoading();
+        handlePayment({ fromClick: true });
+      });
+    $("form.checkout, form#order_review")
+      .find('button, input[type="submit"]')
+      .prop("disabled", true)
+      .show();
+  }
 
+  // --- Polling lifecycle ---
+  function startPolling(transactionRef) {
+    if (!transactionRef || pollStarted) return;
+    if (!window.CeptaPay?.confirmStatus)
+      return console.warn(
+        "[CeptaPay] confirmStatus not available; skipping poll."
+      );
+
+    userClosed = false;
+    callbackFired = false;
+    pollStarted = true;
+    activeRef = transactionRef;
+
+    delayTimeoutId = setTimeout(function () {
+      if (userClosed) {
+        stopPolling();
+        return;
+      }
+
+      pollIntervalId = setInterval(async function () {
+        if (userClosed) {
+          stopPolling();
+          return;
+        }
+
+        try {
+          const result = await window.CeptaPay.confirmStatus(transactionRef);
+          if (!result?.status) return;
+          const d = result.data;
+          if (!d) return;
+
+          const txnRef = d.transactionReference;
+          const amount = parseFloat(d.amount || 0);
+          if (!txnRef || !(amount > 0)) return;
+
+          const status = d.status;
+          if (status === "Successful") {
+            fireOnce("success", transactionRef);
+          } else if (status === "Failed") {
+            fireOnce("failed", transactionRef);
+          }
+        } catch (err) {
+          console.error("[CeptaPay] Polling error:", err);
+          $("#wc-cepta-form").show();
+          fireOnce("close", transactionRef);
+        }
+      }, POLL_INTERVAL_MS);
+    }, POLL_DELAY_MS);
+  }
+
+  // --- SDK callbacks ---
+  function onSuccess(ref) {
+    clearButtonLoading();
+    verifyTransaction(ref);
+  }
+  function onFailed(ref) {
+    console.error("Error during payment processing:", ref);
+    clearButtonLoading();
+    verifyTransaction(ref);
+  }
+  function onClose(ref) {
+    userClosed = true;
+    clearButtonLoading();
+    try {
+      window.CeptaPay?.closeModal();
+    } catch {}
+  }
+
+  // --- URL ?ref= passthrough ---
+  function getUrlRef() {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("ref")) return sp.get("ref");
+    const idx = window.location.href.lastIndexOf("?");
+    if (idx === -1) return null;
+    for (const pair of window.location.href.substring(idx + 1).split("&")) {
+      const [k, v] = pair.split("=");
+      if (k === "ref") return v;
+    }
+    return null;
+  }
+
+  // --- Payment entry ---
+  async function handlePayment(opts = { fromClick: false }) {
+    $("#wc-cepta-form").show();
+    $("form#payment-form, form#order_review")
+      .find("input.cepta_txnref")
+      .val("");
     const amount = Number(wc_cepta_params.amount);
-    const currentUrl = window.location.href;
-    const transactionRef = "WC_" + Date.now();
+    const ref = "WC_" + Date.now();
+    activeRef = ref;
 
-    // Prepare Payment Data for the SDK
-    const customFilters = getCustomFilters();
+    // Parent-verification path if URL already has ?ref=
+    const urlRef = getUrlRef();
+    if (urlRef) {
+      clearButtonLoading();
+      broadcast("success", urlRef);
+      return;
+    }
+
+    if (!window.CeptaPay?.checkout) {
+      console.error("CeptaPay SDK not loaded.");
+      clearButtonLoading();
+      onFailed(ref);
+      return;
+    }
+
     const paymentData = {
-      amount: amount,
+      amount,
       currency: wc_cepta_params.currency,
       description: "Payment for Order ID " + wc_cepta_params.meta_order_id,
       pageName: "",
       customerEmail: wc_cepta_params.email,
-      transactionReference: transactionRef,
+      transactionReference: ref,
       customUrlText: "",
       callbackUrl:
-        currentUrl + "&nonce=" + encodeURIComponent(wc_cepta_params.nonce),
+        window.location.href +
+        "&nonce=" +
+        encodeURIComponent(wc_cepta_params.nonce),
       isPlugin: true,
     };
 
-    // Used for client-side HMAC generation
-    const sdkConfig = {
+    const config = {
       publicKey: wc_cepta_params.public_key,
       secretKey: wc_cepta_params.secret_key,
       baseUrl: wc_cepta_params.base_url,
     };
 
-    /**
-     * Called when the SDK confirms the payment status is "Successful".
-     * @param {string} ref The final transaction reference.
-     */
-    function handleSuccess(ref) {
-      $("form#payment-form, form#order_review")
-        .find("input.cepta_txnref")
-        .val(ref);
+    try {
+      await window.CeptaPay.checkout({
+        paymentData,
+        config,
+        onSuccess,
+        onFailed,
+        onClose,
+      });
 
-      $("form.checkout, form#order_review").submit();
-    }
+      clearButtonLoading();
 
-    /**
-     * Called when the SDK confirms the payment status is "Failed" or initiation fails.
-     * @param {string | null} ref The transaction reference.
-     */
-    function handleFailure(ref) {
-      console.error("CeptaPay Payment Failed. Ref:", ref);
-      $("#wc-cepta-form").show();
-    }
-
-    /**
-     * Called when the user manually closes the payment modal.
-     * @param {string} ref The transaction reference.
-     */
-    function handleClose(ref) {
-      console.warn(
-        "CeptaPay Modal Closed by User. Initiating verification (status check)..."
-      );
-      verifyTransaction(ref);
-    }
-
-    let urlRef = new URLSearchParams(window.location.search).get("ref");
-
-    if (!urlRef) {
-      const queryIndex = currentUrl.lastIndexOf("?");
-      if (queryIndex !== -1) {
-        const params = currentUrl.substring(queryIndex + 1).split("&");
-        for (let i = 0; i < params.length; i++) {
-          const parts = params[i].split("=");
-          if ("ref" === parts[0]) {
-            urlRef = parts[1];
-            break;
-          }
-        }
-      }
-    }
-
-    if (urlRef) {
-      console.log(
-        "Found transaction reference in URL. Initiating verification..."
-      );
-      verifyTransaction(urlRef);
-    } else {
-      if (
-        typeof window.CeptaPay === "undefined" ||
-        typeof window.CeptaPay.checkout !== "function"
-      ) {
-        console.error(
-          "CeptaPay SDK is not loaded. Cannot proceed with payment."
-        );
-        handleFailure(paymentData.transactionReference);
-        return;
-      }
-
-      try {
-        window.CeptaPay.checkout({
-          paymentData: paymentData,
-          config: sdkConfig,
-          onSuccess: handleSuccess,
-          onFailed: handleFailure,
-          onClose: handleClose,
-        });
-      } catch (e) {
-        console.error("CeptaPay Checkout failed to launch:", e.message);
-        handleFailure(paymentData.transactionReference);
-      }
+      startPolling(ref);
+    } catch (err) {
+      console.error("CeptaPay Checkout failed to launch:", err?.message);
+      clearButtonLoading();
+      onFailed(ref);
     }
   }
 
+  // --- postMessage bridge (safe origin) ---
+  window.addEventListener(
+    "message",
+    function (event) {
+      if (ENFORCE_ORIGINS && !ALLOWED_ORIGINS.includes(event.origin)) return;
+
+      let payload = event.data;
+      if (typeof payload === "string") {
+        try {
+          payload = JSON.parse(payload);
+        } catch {
+          return;
+        }
+      }
+      if (!payload?.event) return;
+
+      const ref = payload.transactionRef || activeRef;
+      switch (payload.event) {
+        case "success":
+          onSuccess(ref);
+          break;
+        case "failed":
+          onFailed(ref);
+          break;
+        case "close":
+          onClose(ref);
+          break;
+        default:
+          break;
+      }
+    },
+    false
+  );
+
+  window.addEventListener("beforeunload", stopPolling);
+
+  // --- WooCommerce bindings ---
   $("form.checkout").on("checkout_place_order_cepta", function (e) {
     e.preventDefault();
-    initCeptaPayment();
+    handlePayment({ fromClick: false });
     return false;
   });
 
   $("#order_review").on("submit", function (e) {
     if ($("#payment_method_cepta").is(":checked")) {
       e.preventDefault();
-      initCeptaPayment();
+      handlePayment({ fromClick: false });
       return false;
     }
   });
 
-  if ($("#cepta-payment-button").length) {
-    $("#cepta-payment-button").on("click", function (e) {
-      e.preventDefault();
-      initCeptaPayment();
-      return false;
-    });
-  }
-
-  $("#wc-cepta-form").hide();
-  initCeptaPayment();
-
-  $("#cepta_form form#order_review").submit(function () {
-    handlePayment();
+  $("#cepta-payment-button").on("click", function (e) {
+    e.preventDefault();
+    setButtonLoading();
+    handlePayment({ fromClick: true });
+    return false;
   });
 
-  if (wc_cepta_params.is_order_pay_page === "true") {
-    initCeptaPayment();
+  // --- Init ---
+  $("#wc-cepta-form").hide();
+  if (!initFired) {
+    initFired = true;
+    handlePayment({ fromClick: false });
   }
+  if (String(wc_cepta_params.is_order_pay_page) === "true" && !initFired) {
+    initFired = true;
+    handlePayment({ fromClick: false });
+  }
+
+  restorePayNow();
 });

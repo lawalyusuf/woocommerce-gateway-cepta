@@ -1,5 +1,12 @@
 # Copyright (C) 2025 Cepta Developers
 # This file is distributed under the MIT License.
+# 
+# Cepta Payment Gateway for WooCommerce
+# Translation Template File (.pot)
+# Maintainer: Cepta Developers
+# License: MIT
+# Source: https://wordpress.org/support/plugin/cepta-payment-gateway-for-woocommerce
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Cepta Payment Gateway for WooCommerce\n"
@@ -216,4 +223,7 @@ msgid "Enable Payment via Saved Cards"
 msgstr ""
 
 #: includes/class-wc-gateway-cepta.php:480
-msgid "If enabled, users can pay with a saved card during checkout. Card details are stored securely on Cepta servers, not your store. Note: SSL certificate is
+msgid ""
+"If enabled, users can pay with a saved card during checkout. Card details "
+"are stored securely on Cepta servers, not your store. Note: SSL certificate is required."
+msgstr ""
