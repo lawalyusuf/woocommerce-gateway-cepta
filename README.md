@@ -119,4 +119,4 @@ If Cepta doesn’t appear in checkout options:
 
 ###
 
-![Screenshot 3](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/main/assets/images/Screenshot-cepta-img10.png)
+![Screenshot 3](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/main/assets/images/Screenshot-cepta-img-11.png)
