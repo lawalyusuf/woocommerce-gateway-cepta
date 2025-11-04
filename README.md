@@ -107,16 +107,16 @@ If Cepta doesn’t appear in checkout options:
 
 ###
 
-![Screenshot 1](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/staging/assets/images/Screenshot-cepta-img6.png)
+![Screenshot 1](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/main/assets/images/Screenshot-cepta-img6.png)
 
 ### 2. Cepta Woo Checkout page
 
 ###
 
-![Screenshot 2](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/staging/assets/images/Screenshot-cepta-img9.png)
+![Screenshot 2](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/main/assets/images/Screenshot-cepta-img9.png)
 
 ### 3. Cepta Inline Checkout
 
 ###
 
-![Screenshot 3](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/staging/assets/images/Screenshot-cepta-img10.png)
+![Screenshot 3](https://github.com/lawalyusuf/woocommerce-gateway-cepta/blob/main/assets/images/Screenshot-cepta-img10.png)
