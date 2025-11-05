@@ -136,15 +136,18 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 
 	public function is_valid_for_use()
 	{
-		$supported = apply_filters('woocommerce_cepta_supported_currencies', array('NGN', 'USD', 'ZAR', 'GHS', 'KES', 'XOF', 'EGP'));
-		if (! in_array(get_woocommerce_currency(), $supported, true)) {
+		// Retrieve ALL currency codes supported by WooCommerce (e.g., USD, EUR, NGN, etc.)
+		$supported = array_keys(get_woocommerce_currencies());
+		$supported = apply_filters('woocommerce_cepta_supported_currencies', $supported);
+		if (!in_array(get_woocommerce_currency(), $supported, true)) {
 			$this->msg = sprintf(
 				/* translators: %s: general settings url */
-				__('Cepta does not support your store currency. Set NGN (&#8358;), GHS (&#x20b5;), USD (&#36;), KES (KSh), ZAR (R), XOF (CFA), or EGP (E£) <a href="%s">here</a>', 'woo-cepta'),
+				__('Cepta does not support your store currency. Please check your currency settings <a href="%s">here</a>.', 'woo-cepta'),
 				admin_url('admin.php?page=wc-settings&tab=general')
 			);
 			return false;
 		}
+
 		return true;
 	}
 
@@ -258,7 +261,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 			'payment_page' => array(
 				'title'       => __('Payment Option', 'cepta-wc'),
 				'type'        => 'select',
-				'description' => __('Inline (on-site) or Redirect to Cepta.', 'woo-cepta'),
+				'description' => __('Inline Checkout lets customers pay directly on your site, while Redirect takes them to Cepta to complete payment.', 'woo-cepta'),
 				'default'     => '',
 				'options'     => array(
 					''         => __('Select One', 'woo-cepta'),
