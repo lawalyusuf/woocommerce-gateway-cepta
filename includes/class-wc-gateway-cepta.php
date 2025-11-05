@@ -282,9 +282,9 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				'default'     => '',
 			),
 			'live_secret_key' => array(
-				'title'       => __('Live API Key', 'woo-cepta'),
+				'title'       => __('Live Secret Key', 'woo-cepta'),
 				'type'        => 'password',
-				'description' => __('Enter your Live API key', 'woo-cepta'),
+				'description' => __('Enter your Live Secret Key', 'woo-cepta'),
 				'default'     => '',
 			),
 			'live_public_key' => array(
