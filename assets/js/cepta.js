@@ -1,6 +1,6 @@
 /**
- * CeptaPay WooCommerce Frontend
- * Requires: jQuery, window.CeptaPay, wc_cepta_params
+ * Cepta WooCommerce Frontend
+ * Requires: jQuery, window.Cepta, wc_cepta_params
  */
 
 jQuery(function ($) {
@@ -84,8 +84,7 @@ jQuery(function ($) {
   }
   function closeSdk(reason) {
     try {
-      if (window.CeptaPay?.closeModal)
-        window.CeptaPay.closeModal(reason || "close");
+      if (window.Cepta?.closeModal) window.Cepta.closeModal(reason || "close");
     } catch {}
   }
   function fireOnce(eventType, ref) {
@@ -100,7 +99,7 @@ jQuery(function ($) {
   function verifyTransaction(transactionRef) {
     const ref = transactionRef || activeRef;
     if (!ref)
-      return console.warn("[CeptaPay] verifyTransaction called without ref.");
+      return console.warn("[Cepta] verifyTransaction called without ref.");
 
     $.ajax({
       url: "/wc-api/wc_gateway_cepta_popup",
@@ -133,8 +132,8 @@ jQuery(function ($) {
   // --- Polling lifecycle ---
   function startPolling(transactionRef) {
     if (!transactionRef || pollStarted) return;
-    if (!window.CeptaPay?.confirmStatus) {
-      console.warn("[CeptaPay] confirmStatus not available; skipping poll.");
+    if (!window.Cepta?.confirmStatus) {
+      console.warn("[Cepta] confirmStatus not available; skipping poll.");
       return;
     }
 
@@ -156,7 +155,7 @@ jQuery(function ($) {
         }
 
         try {
-          const result = await window.CeptaPay.confirmStatus(transactionRef);
+          const result = await window.Cepta.confirmStatus(transactionRef);
           if (!result?.status) return;
           const d = result.data;
           if (!d) return;
@@ -172,7 +171,7 @@ jQuery(function ($) {
             fireOnce("failed", transactionRef);
           }
         } catch (err) {
-          console.error("[CeptaPay] Polling error:", err);
+          console.error("[Cepta] Polling error:", err);
           $("#wc-cepta-form").show();
           fireOnce("close", transactionRef);
         }
@@ -193,7 +192,7 @@ jQuery(function ($) {
     hideLoading();
     unlockButton();
     try {
-      window.CeptaPay?.closeModal();
+      window.Cepta?.closeModal();
     } catch {}
   }
 
@@ -232,8 +231,8 @@ jQuery(function ($) {
       return;
     }
 
-    if (!window.CeptaPay?.checkout) {
-      console.error("CeptaPay SDK not loaded.");
+    if (!window.Cepta?.checkout) {
+      console.error("Cepta SDK not loaded.");
       hideLoading();
       modal(
         "Payment cannot be initiated at the moment. Please refresh and try again.",
@@ -264,7 +263,7 @@ jQuery(function ($) {
     };
 
     try {
-      await window.CeptaPay.checkout({
+      await window.Cepta.checkout({
         paymentData,
         config,
         onSuccess,
@@ -274,7 +273,7 @@ jQuery(function ($) {
       // Modal launched; keep loader until a callback resolves outcome
       startPolling(ref);
     } catch (err) {
-      console.error("CeptaPay Checkout failed to launch:", err?.message);
+      console.error("Cepta Checkout failed to launch:", err?.message);
       hideLoading();
       unlockButton();
       modal(

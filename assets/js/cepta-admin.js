@@ -1,5 +1,5 @@
 /*!
- * CeptaPay – WooCommerce Admin UI helpers
+ * Cepta – WooCommerce Admin UI helpers
  * - Toggles settings (test keys, split payment, metadata, channel filters)
  * - Select2 icon rendering and secret-key show/hide
  * - Keeps original behavior, tightened selectors & checks

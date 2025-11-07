@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CeptaPay – Custom Gateway (admin UI + checkout params)
+ * Cepta – Custom Gateway (admin UI + checkout params)
  * - Settings, icons, param building, split filters, metadata, and checkout localization.
  */
 

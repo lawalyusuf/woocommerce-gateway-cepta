@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CeptaPay – Woo Blocks support
+ * Cepta – Woo Blocks support
  * - Registers Blocks JS, exposes gateway data, and surfaces failure messages.
  * - Preserves original behavior; adds safety checks and cleaner loading.
  */

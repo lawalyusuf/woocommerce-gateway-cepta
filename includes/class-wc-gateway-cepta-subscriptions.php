@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CeptaPay – Subscriptions bridge
+ * Cepta – Subscriptions bridge
  * - Keeps original behavior for free-trial (₦0) orders and scheduled renewals.
  * - Hooks WCS renewal action and defers non-trial flows to parent gateway.
  */

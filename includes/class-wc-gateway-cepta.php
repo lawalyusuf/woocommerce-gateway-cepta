@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CeptaPay WooCommerce Gateway
+ * Cepta WooCommerce Gateway
  * - settings, checkout, redirect/inline, popup verify, tokens, subscriptions, icons
  * 
  */
@@ -94,7 +94,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$this->live_public_key = $this->get_option('live_public_key');
 		$this->live_secret_key = $this->get_option('live_secret_key');
 
-		$this->saved_cards                = ('yes' === $this->get_option('saved_cards'));
+		// $this->saved_cards                = ('yes' === $this->get_option('saved_cards'));
 		$this->split_payment              = ('yes' === $this->get_option('split_payment'));
 		$this->remove_cancel_order_button = ('yes' === $this->get_option('remove_cancel_order_button'));
 
@@ -308,14 +308,14 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				'type'        => 'checkbox',
 				'default'     => 'no',
 			),
-			'saved_cards' => array(
-				'title'       => __('Saved Cards', 'woo-cepta'),
-				'label'       => __('Enable Payment via Saved Cards', 'woo-cepta'),
-				'type'        => 'checkbox',
-				'description' => __('Cards saved on Cepta (not your store). SSL required.', 'woo-cepta'),
-				'default'     => 'no',
-				'desc_tip'    => true,
-			),
+			// 'saved_cards' => array(
+			// 	'title'       => __('Saved Cards', 'woo-cepta'),
+			// 	'label'       => __('Enable Payment via Saved Cards', 'woo-cepta'),
+			// 	'type'        => 'checkbox',
+			// 	'description' => __('Cards saved on Cepta (not your store). SSL required.', 'woo-cepta'),
+			// 	'default'     => 'no',
+			// 	'desc_tip'    => true,
+			// ),
 			'custom_metadata' => array(
 				'title'       => __('Custom Metadata', 'woo-cepta'),
 				'label'       => __('Enable Custom Metadata', 'woo-cepta'),
@@ -768,7 +768,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 					$notice = __('Payment successful but currency mismatch. Order on hold.', 'woo-cepta');
 				} else {
 					$order->payment_complete($txn_ref);
-					$order->add_order_note(sprintf(__('Payment via CeptaPay Successful (Transaction Reference: %s)', 'woo-cepta'), $txn_ref));
+					$order->add_order_note(sprintf(__('Payment via Cepta Successful (Transaction Reference: %s)', 'woo-cepta'), $txn_ref));
 					if ($this->is_autocomplete_order_enabled($order)) {
 						$order->update_status('completed', '');
 					}
@@ -790,7 +790,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 				));
 			} elseif ('Failed' === $status) {
 				$msg = isset($data->message) ? $data->message : 'Payment declined by gateway.';
-				$order->update_status('failed', sprintf(__('Payment was declined by CeptaPay. Details: %s', 'woo-cepta'), $msg));
+				$order->update_status('failed', sprintf(__('Payment was declined by Cepta. Details: %s', 'woo-cepta'), $msg));
 				wp_send_json(array('statusRes' => false, 'status' => 'error', 'message' => 'Payment failed or declined.'));
 			} else {
 				$order->add_order_note(sprintf(__('Payment status is currently: %s', 'woo-cepta'), $status));
