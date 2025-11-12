@@ -436,7 +436,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 
 		$public_key = $this->testmode ? $this->test_public_key : $this->live_public_key;
 		$secret_key = $this->testmode ? $this->test_secret_key : $this->live_secret_key;
-		$base_url   = 'https://dev-adapter.cepta.co';
+		$base_url   = 'https://adapter.cepta.co';
 
 		$suffix = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) ? '' : '.min';
 
@@ -610,7 +610,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$nonce        = wp_create_nonce('wc_cepta_payment_nonce');
 		$public_key   = $this->testmode ? $this->test_public_key : $this->live_public_key;
 		$secret_key   = $this->testmode ? $this->test_secret_key : $this->live_secret_key;
-		$cepta_url    = 'https://dev-adapter.cepta.co/api/v1/pay';
+		$cepta_url    = 'https://adapter.cepta.co/api/v1/pay';
 		$callback_url = add_query_arg('nonce', $nonce, $order->get_checkout_payment_url(true));
 
 		$payload = array(
@@ -713,7 +713,7 @@ class WC_Gateway_Cepta extends WC_Payment_Gateway_CC
 		$is_test   = $this->testmode ?? true;
 		$pub_key   = $is_test ? $this->test_public_key : $this->live_public_key;
 		$sec_key   = $is_test ? $this->test_secret_key : $this->live_secret_key;
-		$base_url  = 'https://dev-adapter.cepta.co';
+		$base_url  = 'https://adapter.cepta.co';
 		$site_url  = get_site_url();
 		$ts        = time();
 		$method    = 'GET';
